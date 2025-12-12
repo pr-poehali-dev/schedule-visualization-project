@@ -111,14 +111,25 @@ const Index = () => {
           <div className="flex">
             <div className="w-20 flex-shrink-0 border-r border-gray-200 bg-gray-50">
               <div className="h-16 border-b border-gray-200"></div>
-              {timeSlots.map((time, idx) => (
-                <div
-                  key={time}
-                  className="h-[60px] border-b border-gray-200 flex items-start justify-center pt-1"
-                >
-                  <span className="text-sm font-medium text-gray-600">{time}</span>
-                </div>
-              ))}
+              <div className="relative" style={{ height: `${timeSlots.length * 60}px` }}>
+                {timeSlots.map((time, idx) => (
+                  <div
+                    key={time}
+                    className="absolute w-full"
+                    style={{ top: `${idx * 60}px` }}
+                  >
+                    <div className="relative h-[60px] border-b border-gray-200 flex items-center justify-center">
+                      <span className="absolute -top-2.5 bg-gray-50 px-2 text-sm font-medium text-gray-600">
+                        {time}
+                      </span>
+                      <div 
+                        className="absolute w-full border-b border-gray-300"
+                        style={{ top: '30px' }}
+                      ></div>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
 
             <div className="flex-1 overflow-x-auto">
@@ -131,11 +142,16 @@ const Index = () => {
 
                     <div className="relative" style={{ height: `${timeSlots.length * 60}px` }}>
                       {timeSlots.map((_, timeIdx) => (
-                        <div
-                          key={timeIdx}
-                          className="absolute w-full h-[60px] border-b border-gray-100"
-                          style={{ top: `${timeIdx * 60}px` }}
-                        ></div>
+                        <div key={timeIdx}>
+                          <div
+                            className="absolute w-full border-b border-gray-200"
+                            style={{ top: `${timeIdx * 60}px` }}
+                          ></div>
+                          <div
+                            className="absolute w-full border-b border-gray-100"
+                            style={{ top: `${timeIdx * 60 + 30}px` }}
+                          ></div>
+                        </div>
                       ))}
 
                       {bookingsData
