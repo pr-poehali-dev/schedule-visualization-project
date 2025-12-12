@@ -27,7 +27,7 @@ const halls = [
 ];
 
 const timeSlots = [
-  "09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00", "18:00"
+  "08:00", "09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00", "18:00", "19:00", "20:00", "21:00", "22:00", "23:00", "00:00"
 ];
 
 const hallColors = [
@@ -53,12 +53,21 @@ const getBookingPosition = (timeRange: string) => {
   const [start, end] = timeRange.split("–");
   const startMinutes = parseTime(start);
   const endMinutes = parseTime(end);
-  const dayStartMinutes = parseTime("09:00");
+  const dayStartMinutes = parseTime("08:00");
   
   const top = ((startMinutes - dayStartMinutes) / 60) * 60;
   const height = ((endMinutes - startMinutes) / 60) * 60;
   
   return { top, height };
+};
+
+const getCurrentTimePosition = () => {
+  const now = new Date();
+  const currentMinutes = now.getHours() * 60 + now.getMinutes();
+  const dayStartMinutes = parseTime("08:00");
+  
+  const position = ((currentMinutes - dayStartMinutes) / 60) * 60;
+  return position;
 };
 
 const getStatusColor = (localStatus: string | null) => {
@@ -75,7 +84,7 @@ const Index = () => {
   const [bookingsData, setBookingsData] = useState<Booking[]>([]);
   const [halls, setHalls] = useState<string[]>([]);
   const [selectedBooking, setSelectedBooking] = useState<{ booking: Booking; hallIdx: number } | null>(null);
-  const [localStatuses, setLocalStatuses] = useState<Record<string, string>>({});
+  const [currentTimePosition, setCurrentTimePosition] = useState(getCurrentTimePosition());
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['schedule'],
@@ -87,6 +96,16 @@ const Index = () => {
     refetchInterval: 60000,
   });
 
+  const { data: statusesData, refetch: refetchStatuses } = useQuery({
+    queryKey: ['statuses'],
+    queryFn: async () => {
+      const response = await fetch('https://functions.poehali.dev/f4d79b06-ae92-448d-8215-d890aa8f58c0');
+      if (!response.ok) throw new Error('Failed to fetch statuses');
+      return response.json();
+    },
+    refetchInterval: 5000,
+  });
+
   useEffect(() => {
     if (data?.bookings) {
       setBookingsData(data.bookings);
@@ -94,6 +113,40 @@ const Index = () => {
       setHalls(uniqueHalls as string[]);
     }
   }, [data]);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentTimePosition(getCurrentTimePosition());
+    }, 60000);
+    
+    return () => clearInterval(interval);
+  }, []);
+
+  const updateStatus = async (bookingKey: string, status: string) => {
+    try {
+      await fetch('https://functions.poehali.dev/f4d79b06-ae92-448d-8215-d890aa8f58c0', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ booking_key: bookingKey, status }),
+      });
+      refetchStatuses();
+    } catch (e) {
+      console.error('Failed to update status:', e);
+    }
+  };
+
+  const deleteStatus = async (bookingKey: string) => {
+    try {
+      await fetch('https://functions.poehali.dev/f4d79b06-ae92-448d-8215-d890aa8f58c0', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ booking_key: bookingKey }),
+      });
+      refetchStatuses();
+    } catch (e) {
+      console.error('Failed to delete status:', e);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 p-8">
@@ -149,14 +202,21 @@ const Index = () => {
                         </div>
                       ))}
 
+                      <div
+                        className="absolute w-full h-0.5 bg-red-500 z-10 shadow-md"
+                        style={{ top: `${currentTimePosition}px` }}
+                      >
+                        <div className="absolute -left-2 -top-2 w-4 h-4 bg-red-500 rounded-full"></div>
+                      </div>
+
                       {bookingsData
                         .filter((booking) => booking.hall === hall)
                         .map((booking, bookingIdx) => {
                           const { top, height } = getBookingPosition(booking.time);
                           const bookingKey = `${booking.time}_${booking.hall}`;
-                          const localStatus = localStatuses[bookingKey];
+                          const syncedStatus = statusesData?.statuses?.[bookingKey];
                           const baseColorClass = hallColors[idx % hallColors.length];
-                          const statusColorClass = getStatusColor(localStatus);
+                          const statusColorClass = getStatusColor(syncedStatus);
                           const finalColorClass = statusColorClass || baseColorClass;
 
                           return (
@@ -200,7 +260,7 @@ const Index = () => {
                   <Button
                     onClick={() => {
                       const key = `${selectedBooking.booking.time}_${selectedBooking.booking.hall}`;
-                      setLocalStatuses({ ...localStatuses, [key]: 'arrived' });
+                      updateStatus(key, 'arrived');
                       setSelectedBooking(null);
                     }}
                     className="flex-1 bg-purple-500 hover:bg-purple-600"
@@ -210,7 +270,7 @@ const Index = () => {
                   <Button
                     onClick={() => {
                       const key = `${selectedBooking.booking.time}_${selectedBooking.booking.hall}`;
-                      setLocalStatuses({ ...localStatuses, [key]: 'entered' });
+                      updateStatus(key, 'entered');
                       setSelectedBooking(null);
                     }}
                     className="flex-1 bg-green-500 hover:bg-green-600"
@@ -222,9 +282,7 @@ const Index = () => {
                   variant="outline"
                   onClick={() => {
                     const key = `${selectedBooking.booking.time}_${selectedBooking.booking.hall}`;
-                    const newStatuses = { ...localStatuses };
-                    delete newStatuses[key];
-                    setLocalStatuses(newStatuses);
+                    deleteStatus(key);
                     setSelectedBooking(null);
                   }}
                   className="w-full"
