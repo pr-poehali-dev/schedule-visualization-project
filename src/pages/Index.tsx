@@ -1,6 +1,8 @@
 import { Card } from "@/components/ui/card";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 
 interface Booking {
   time: string;
@@ -29,9 +31,7 @@ const timeSlots = [
 ];
 
 const hallColors = [
-  "bg-purple-100 border-purple-300 text-purple-900",
   "bg-blue-100 border-blue-300 text-blue-900",
-  "bg-green-100 border-green-300 text-green-900",
   "bg-yellow-100 border-yellow-300 text-yellow-900",
   "bg-pink-100 border-pink-300 text-pink-900",
   "bg-indigo-100 border-indigo-300 text-indigo-900",
@@ -39,7 +39,9 @@ const hallColors = [
   "bg-teal-100 border-teal-300 text-teal-900",
   "bg-orange-100 border-orange-300 text-orange-900",
   "bg-cyan-100 border-cyan-300 text-cyan-900",
-  "bg-violet-100 border-violet-300 text-violet-900",
+  "bg-amber-100 border-amber-300 text-amber-900",
+  "bg-sky-100 border-sky-300 text-sky-900",
+  "bg-rose-100 border-rose-300 text-rose-900",
 ];
 
 const parseTime = (timeStr: string): number => {
@@ -59,21 +61,21 @@ const getBookingPosition = (timeRange: string) => {
   return { top, height };
 };
 
-const getStatusColor = (status: string) => {
-  switch (status) {
-    case 'done':
-      return 'bg-green-100 border-green-400 text-green-900';
-    case 'cancelled':
-      return 'bg-red-100 border-red-400 text-red-900 opacity-60';
-    case 'booked':
-    default:
-      return '';
+const getStatusColor = (localStatus: string | null) => {
+  if (localStatus === 'arrived') {
+    return 'bg-purple-100 border-purple-400 text-purple-900';
   }
+  if (localStatus === 'entered') {
+    return 'bg-green-100 border-green-400 text-green-900';
+  }
+  return '';
 };
 
 const Index = () => {
   const [bookingsData, setBookingsData] = useState<Booking[]>([]);
   const [halls, setHalls] = useState<string[]>([]);
+  const [selectedBooking, setSelectedBooking] = useState<{ booking: Booking; hallIdx: number } | null>(null);
+  const [localStatuses, setLocalStatuses] = useState<Record<string, string>>({});
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['schedule'],
@@ -151,13 +153,16 @@ const Index = () => {
                         .filter((booking) => booking.hall === hall)
                         .map((booking, bookingIdx) => {
                           const { top, height } = getBookingPosition(booking.time);
+                          const bookingKey = `${booking.time}_${booking.hall}`;
+                          const localStatus = localStatuses[bookingKey];
                           const baseColorClass = hallColors[idx % hallColors.length];
-                          const statusColorClass = getStatusColor(booking.status || 'booked');
+                          const statusColorClass = getStatusColor(localStatus);
                           const finalColorClass = statusColorClass || baseColorClass;
 
                           return (
                             <div
                               key={bookingIdx}
+                              onClick={() => setSelectedBooking({ booking, hallIdx: idx })}
                               className={`absolute left-1 right-1 rounded-md border-2 shadow-sm ${finalColorClass} p-2 overflow-hidden transition-all hover:shadow-md hover:scale-[1.02] cursor-pointer`}
                               style={{
                                 top: `${top}px`,
@@ -179,20 +184,57 @@ const Index = () => {
           </div>
         </Card>
 
-        <div className="mt-6 flex items-center justify-center gap-6 text-sm text-gray-600">
-          <div className="flex items-center gap-2">
-            <div className="w-4 h-4 bg-green-100 border-2 border-green-400 rounded"></div>
-            <span>Выполнено</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-4 h-4 bg-purple-100 border-2 border-purple-300 rounded"></div>
-            <span>Забронировано</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-4 h-4 bg-red-100 border-2 border-red-400 rounded opacity-60"></div>
-            <span>Отменено</span>
-          </div>
-        </div>
+        <Dialog open={!!selectedBooking} onOpenChange={() => setSelectedBooking(null)}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Установить статус брони</DialogTitle>
+            </DialogHeader>
+            {selectedBooking && (
+              <div className="space-y-4">
+                <div className="text-sm text-gray-600">
+                  <p className="font-semibold">{selectedBooking.booking.hall}</p>
+                  <p>{selectedBooking.booking.time}</p>
+                  <p>{selectedBooking.booking.people} чел.</p>
+                </div>
+                <div className="flex gap-3">
+                  <Button
+                    onClick={() => {
+                      const key = `${selectedBooking.booking.time}_${selectedBooking.booking.hall}`;
+                      setLocalStatuses({ ...localStatuses, [key]: 'arrived' });
+                      setSelectedBooking(null);
+                    }}
+                    className="flex-1 bg-purple-500 hover:bg-purple-600"
+                  >
+                    Пришли
+                  </Button>
+                  <Button
+                    onClick={() => {
+                      const key = `${selectedBooking.booking.time}_${selectedBooking.booking.hall}`;
+                      setLocalStatuses({ ...localStatuses, [key]: 'entered' });
+                      setSelectedBooking(null);
+                    }}
+                    className="flex-1 bg-green-500 hover:bg-green-600"
+                  >
+                    Зашли
+                  </Button>
+                </div>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    const key = `${selectedBooking.booking.time}_${selectedBooking.booking.hall}`;
+                    const newStatuses = { ...localStatuses };
+                    delete newStatuses[key];
+                    setLocalStatuses(newStatuses);
+                    setSelectedBooking(null);
+                  }}
+                  className="w-full"
+                >
+                  Сбросить статус
+                </Button>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );
