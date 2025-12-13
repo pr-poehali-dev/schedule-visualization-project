@@ -227,7 +227,7 @@ const Index = () => {
                                 height: `${(height - 4) * 0.75}px`,
                               }}
                             >
-                              <div className="text-[7px] md:text-[10px] font-semibold leading-none mb-0.5 whitespace-nowrap overflow-hidden text-ellipsis">{booking.time}</div>
+                              <div className="text-[6px] md:text-[9px] font-semibold leading-none mb-0.5 whitespace-nowrap overflow-visible">{booking.time}</div>
                               {booking.people > 0 && (
                                 <div className="text-[7px] md:text-[10px] opacity-80 leading-none whitespace-nowrap overflow-hidden text-ellipsis">{booking.people} чел.</div>
                               )}
