@@ -149,29 +149,29 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-8">
-      <div className="max-w-[1600px] mx-auto">
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">Расписание фотостудии</h1>
-          <p className="text-gray-600">13 декабря 2025 {isLoading && '• Загрузка...'}</p>
+    <div className="min-h-screen bg-gray-50 p-2 md:p-8">
+      <div className="max-w-full mx-auto">
+        <div className="mb-4 md:mb-8 px-2">
+          <h1 className="text-2xl md:text-4xl font-bold text-gray-900 mb-1 md:mb-2">ФОТОСТУДИИ</h1>
+          <p className="text-sm md:text-base text-gray-600">13 декабря 2025 {isLoading && '• Загрузка...'}</p>
           {error && <p className="text-red-600 text-sm mt-1">Ошибка загрузки данных</p>}
         </div>
 
         <Card className="overflow-hidden shadow-lg">
           <div className="flex">
-            <div className="w-20 flex-shrink-0 border-r border-gray-200 bg-gray-50">
-              <div className="h-16 border-b border-gray-200"></div>
-              <div className="relative" style={{ height: `${timeSlots.length * 60}px` }}>
+            <div className="w-12 md:w-20 flex-shrink-0 border-r border-gray-200 bg-gray-50">
+              <div className="h-10 md:h-16 border-b border-gray-200"></div>
+              <div className="relative" style={{ height: `${timeSlots.length * 45}px` }}>
                 {timeSlots.map((time, idx) => (
                   <div key={time}>
                     <div
                       className="absolute w-full flex flex-col items-center"
-                      style={{ top: `${idx * 60}px` }}
+                      style={{ top: `${idx * 45}px` }}
                     >
-                      <span className="text-sm font-semibold text-gray-700">
+                      <span className="text-[10px] md:text-sm font-semibold text-gray-700">
                         {time}
                       </span>
-                      <span className="text-[10px] text-gray-400 mt-3">
+                      <span className="text-[8px] md:text-[10px] text-gray-400 mt-1 md:mt-3">
                         :30
                       </span>
                     </div>
@@ -181,32 +181,32 @@ const Index = () => {
             </div>
 
             <div className="flex-1 overflow-x-auto">
-              <div className="grid min-w-[1400px]" style={{ gridTemplateColumns: `repeat(${halls.length}, minmax(120px, 1fr))` }}>
+              <div className="grid" style={{ gridTemplateColumns: `repeat(${halls.length}, minmax(60px, 1fr))` }}>
                 {halls.map((hall, idx) => (
                   <div key={hall} className="border-r border-gray-200 last:border-r-0">
-                    <div className="h-16 border-b border-gray-200 flex items-center justify-center bg-gray-100 px-2">
-                      <span className="text-sm font-semibold text-gray-800 text-center">{hall}</span>
+                    <div className="h-10 md:h-16 border-b border-gray-200 flex items-center justify-center bg-gray-100 px-1">
+                      <span className="text-[10px] md:text-sm font-semibold text-gray-800 text-center leading-tight">{hall}</span>
                     </div>
 
-                    <div className="relative" style={{ height: `${timeSlots.length * 60}px` }}>
+                    <div className="relative" style={{ height: `${timeSlots.length * 45}px` }}>
                       {timeSlots.map((_, timeIdx) => (
                         <div key={timeIdx}>
                           <div
                             className="absolute w-full border-b-2 border-gray-300"
-                            style={{ top: `${timeIdx * 60}px` }}
+                            style={{ top: `${timeIdx * 45}px` }}
                           ></div>
                           <div
                             className="absolute w-full border-b border-dashed border-gray-200"
-                            style={{ top: `${timeIdx * 60 + 30}px` }}
+                            style={{ top: `${timeIdx * 45 + 22.5}px` }}
                           ></div>
                         </div>
                       ))}
 
                       <div
                         className="absolute w-full h-0.5 bg-red-500 z-10 shadow-md"
-                        style={{ top: `${currentTimePosition}px` }}
+                        style={{ top: `${currentTimePosition * 0.75}px` }}
                       >
-                        <div className="absolute -left-2 -top-2 w-4 h-4 bg-red-500 rounded-full"></div>
+                        <div className="absolute -left-1.5 md:-left-2 -top-1.5 md:-top-2 w-3 h-3 md:w-4 md:h-4 bg-red-500 rounded-full"></div>
                       </div>
 
                       {bookingsData
@@ -223,15 +223,15 @@ const Index = () => {
                             <div
                               key={bookingIdx}
                               onClick={() => setSelectedBooking({ booking, hallIdx: idx })}
-                              className={`absolute left-1 right-1 rounded-md border-2 shadow-sm ${finalColorClass} p-2 overflow-hidden transition-all hover:shadow-md hover:scale-[1.02] cursor-pointer`}
+                              className={`absolute left-0.5 right-0.5 md:left-1 md:right-1 rounded-sm md:rounded-md border-2 shadow-sm ${finalColorClass} p-1 md:p-2 overflow-hidden transition-all hover:shadow-md hover:scale-[1.02] cursor-pointer`}
                               style={{
-                                top: `${top}px`,
-                                height: `${height - 4}px`,
+                                top: `${top * 0.75}px`,
+                                height: `${(height - 4) * 0.75}px`,
                               }}
                             >
-                              <div className="text-xs font-semibold mb-1">{booking.time}</div>
+                              <div className="text-[8px] md:text-xs font-semibold mb-0.5 md:mb-1 leading-tight">{booking.time}</div>
                               {booking.people > 0 && (
-                                <div className="text-xs opacity-80">{booking.people} чел.</div>
+                                <div className="text-[8px] md:text-xs opacity-80 leading-tight">{booking.people} чел.</div>
                               )}
                             </div>
                           );
